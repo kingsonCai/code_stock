@@ -1,0 +1,25 @@
+# Core dependencies
+numpy>=1.24.0
+pandas>=2.0.0
+ta-lib>=0.4.28
+
+# Async and networking
+aiohttp>=3.9.0
+websockets>=12.0
+
+# Data validation
+pydantic>=2.5.0
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Logging
+loguru>=0.7.2
+
+# Development
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+mypy>=1.8.0
+black>=23.12.0
+ruff>=0.1.0
