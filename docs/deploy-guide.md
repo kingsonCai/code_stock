@@ -1,18 +1,17 @@
-# OpenClaw + fenxi-service 部署指引
+# Code Stock 部署指引
 
 ## 概述
 
-本文档介绍如何在云服务器（Ubuntu 22.04/24.04）上部署以下服务：
+本项目是一个量化交易平台，包含以下服务：
 
-- **OpenClaw Gateway**：AI Agent 网关，提供 Dashboard 和对话功能
-- **fenxi-service**：自定义 MCP 服务，提供考试数据分析工具
-- **模型**：DeepSeek（deepseek-chat）
+- **backend**：Koa + TypeScript 后端服务（端口 3000）
+- **frontend**：Vue 3 + Vite 前端（开发模式或静态部署）
+- **python-engine**：Python 引擎（策略回测、数据处理）
+- **基础设施**：MongoDB / PostgreSQL + Redis（通过 Docker Compose 部署）
 
 ---
 
-## 一、云服务器准备
-
-### 1.1 服务器要求
+## 一、服务器要求
 
 | 项目 | 最低配置 |
 |------|---------|
@@ -21,8 +20,6 @@
 | 磁盘 | 40 GB |
 | 系统 | Ubuntu 22.04 / 24.04 LTS |
 
-### 1.2 系统更新
-
 ```bash
 sudo apt update && sudo apt upgrade -y
 sudo apt install -y curl git build-essential
@@ -30,190 +27,47 @@ sudo apt install -y curl git build-essential
 
 ---
 
-## 二、安装 Node.js 22
+## 二、安装基础环境
+
+### 2.1 Node.js 22
 
 ```bash
-# 安装 nvm
 curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash
 source ~/.bashrc
 
-# 安装 Node 22
 nvm install 22
 nvm use 22
 nvm alias default 22
 
+node -v   # v22.x.x
+npm -v    # 10.x.x
+```
+
+### 2.2 Python 3
+
+```bash
+sudo apt install -y python3 python3-pip python3-venv
+python3 --version
+```
+
+### 2.3 Docker & Docker Compose
+
+```bash
+# 安装 Docker
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER
+
+# 重新登录使 docker 组生效，或执行：
+newgrp docker
+
 # 验证
-node -v   # 应显示 v22.x.x
-npm -v    # 应显示 10.x.x
+docker --version
+docker compose version
 ```
 
 ---
 
-## 三、安装 OpenClaw
-
-```bash
-npm install -g openclaw
-
-# 验证
-openclaw --version
-```
-
-### 3.1 初始化配置
-
-```bash
-openclaw setup
-```
-
-按提示完成初始化。或手动创建配置文件：
-
-```bash
-mkdir -p ~/.openclaw/agents/main/agent
-```
-
-### 3.2 配置 openclaw.json
-
-编辑 `~/.openclaw/openclaw.json`：
-
-```json
-{
-  "gateway": {
-    "mode": "local",
-    "auth": {
-      "mode": "token",
-      "token": "你的token（openssl rand -hex 24 生成）"
-    }
-  },
-  "auth": {
-    "profiles": {
-      "deepseek:default": {
-        "provider": "deepseek",
-        "mode": "api_key"
-      }
-    }
-  },
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "deepseek/deepseek-chat"
-      },
-      "models": {
-        "deepseek/deepseek-chat": {}
-      },
-      "compaction": {
-        "mode": "safeguard"
-      },
-      "maxConcurrent": 4,
-      "subagents": {
-        "maxConcurrent": 8
-      }
-    }
-  },
-  "messages": {
-    "ackReactionScope": "group-mentions"
-  },
-  "commands": {
-    "native": "auto",
-    "nativeSkills": "auto",
-    "restart": true,
-    "ownerDisplay": "raw"
-  }
-}
-```
-
-### 3.3 配置 DeepSeek API Key
-
-编辑 `~/.openclaw/agents/main/agent/auth-profiles.json`：
-
-```json
-{
-  "version": 1,
-  "profiles": {
-    "deepseek:default": {
-      "type": "api_key",
-      "provider": "deepseek",
-      "key": "你的DeepSeek API Key"
-    }
-  },
-  "lastGood": {
-    "deepseek": "deepseek:default"
-  }
-}
-```
-
-> DeepSeek API Key 获取地址：https://platform.deepseek.com
-
-### 3.4 配置 Gemini 模型（可选）
-
-如果想使用 Google Gemini 模型（有免费额度），：
-
-**1) 获取 API Key**
-
-访问 https://aistudio.google.com/apikey ，登录 Google 账号，点击 **Create API Key**。
-
-**2) 修改 openclaw.json**
-
-在 `auth.profiles` 中添加 Google 配置，将 `agents.defaults.model.primary` 改为 Gemini 模型：
-
-```json
-{
-  "auth": {
-    "profiles": {
-      "google:default": {
-        "provider": "google",
-        "mode": "api_key"
-      }
-    }
-  },
-  "agents": {
-    "defaults": {
-      "model": {
-        "primary": "google/gemini-2.5-flash"
-      },
-      "models": {
-        "google/gemini-2.5-flash": {}
-      },
-      "compaction": {
-        "mode": "safeguard"
-      },
-      "maxConcurrent": 4,
-      "subagents": {
-        "maxConcurrent": 8
-      }
-    }
-  }
-}
-```
-
-**3) 配置 API Key**
-
-编辑 `~/.openclaw/agents/main/agent/auth-profiles.json`：
-
-```json
-{
-  "version": 1,
-  "profiles": {
-    "google:default": {
-      "type": "api_key",
-      "provider": "google",
-      "key": "你的Gemini API Key"
-    }
-  },
-  "lastGood": {
-    "google": "google:default"
-  }
-}
-```
-
-> **注意**：
-> - `gemini-2.5-flash` 免费额度较大，推荐使用
-> - `gemini-2.5-pro` 功能更强但免费额度较少，容易触发配额限制
-> - 免费层有每分钟请求数限制，如果遇到 429 错误，稍后重试即可
-
----
-
-## 四、部署 fenxi-service（MCP 服务）
-
-### 4.1 拉取代码
+## 三、拉取代码
 
 ```bash
 cd ~
@@ -221,270 +75,323 @@ git clone https://github.com/kingsonCai/code_stock.git
 cd code_stock
 ```
 
-> MCP 服务代码位于仓库中的 `my-mcp-server/` 目录（根据实际路径调整）
+---
 
-### 4.2 安装依赖
+## 四、启动基础设施（MongoDB / PostgreSQL / Redis）
 
 ```bash
-cd /path/to/my-mcp-server
+cd ~/code_stock
+docker compose up -d
+```
+
+等待服务就绪：
+
+```bash
+docker compose ps
+# 三个服务状态应为 healthy
+```
+
+| 服务 | 端口 | 默认账号 |
+|------|------|---------|
+| MongoDB | 27017 | admin / admin123 |
+| PostgreSQL | 5432 | admin / admin123 |
+| Redis | 6379 | 无密码 |
+
+---
+
+## 五、启动 Backend
+
+### 5.1 安装依赖
+
+```bash
+cd ~/code_stock/backend
 npm install
 ```
 
-### 4.3 验证 MCP 服务
+### 5.2 配置环境变量
 
 ```bash
-node server.js
-# 应无报错，按 Ctrl+C 退出
+cp .env.example .env   # 如果没有 .env，参考下面的模板
 ```
 
-### 4.4 注册 MCP 服务到 OpenClaw
+编辑 `backend/.env`，生产环境注意修改以下项：
+
+```env
+# 环境配置
+NODE_ENV=production
+
+# 服务器配置
+PORT=3000
+HOST=0.0.0.0
+
+# JWT 配置（务必修改为随机字符串）
+JWT_SECRET=用 openssl rand -hex 32 生成
+JWT_EXPIRES_IN=7d
+JWT_REFRESH_EXPIRES_IN=30d
+
+# 数据库配置 - MongoDB
+MONGO_URI=mongodb://admin:admin123@localhost:27017/quant_trading?authSource=admin
+MONGO_DB_NAME=quant_trading
+
+# 数据库配置 - PostgreSQL
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=admin
+POSTGRES_PASSWORD=admin123
+POSTGRES_DB=quant_trading
+
+# Redis 配置
+REDIS_HOST=localhost
+REDIS_PORT=6379
+
+# 数据库类型选择 (mongodb | postgresql)
+DATABASE_TYPE=mongodb
+
+# Python 引擎配置
+PYTHON_PATH=python3
+PYTHON_ENGINE_PATH=../python-engine
+
+# 日志级别
+LOG_LEVEL=warn
+```
+
+### 5.3 构建并启动
 
 ```bash
-openclaw mcp set fenxi-service '{"command":"node","args":["/home/你的用户名/code/path/to/my-mcp-server/server.js"]}'
-```
+# 开发模式
+npm run dev
 
-> **注意**：args 里的路径必须是**绝对路径**
+# 生产模式
+npm run build
+npm start
+```
 
 验证：
 
 ```bash
-openclaw mcp list
-# 应显示：fenxi-service
+curl http://localhost:3000
 ```
 
 ---
 
-## 五、配置 OpenClaw 为系统服务
+## 六、启动 Frontend
 
-### 5.1 创建 systemd 服务
+### 6.1 安装依赖
 
 ```bash
-mkdir -p ~/.config/systemd/user
+cd ~/code_stock/frontend
+npm install
+```
 
-cat > ~/.config/systemd/user/openclaw-gateway.service << 'EOF'
+### 6.2 配置
+
+如需修改后端 API 地址，编辑 frontend 中的环境配置文件，将 API 地址指向 backend 服务。
+
+### 6.3 启动
+
+```bash
+# 开发模式
+npm run dev
+
+# 生产构建
+npm run build
+# 构建产物在 dist/ 目录，可用 Nginx 托管
+```
+
+---
+
+## 七、Python 引擎
+
+### 7.1 安装依赖
+
+```bash
+cd ~/code_stock/python-engine
+
+# 建议使用虚拟环境
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+### 7.2 注意
+
+`ta-lib` 依赖 C 库，需先安装：
+
+```bash
+sudo apt install -y libta-lib0-dev
+```
+
+如果安装失败，可参考：https://github.com/ta-lib/ta-lib-python
+
+---
+
+## 八、生产部署（推荐）
+
+### 8.1 使用 systemd 管理 backend
+
+```bash
+cat > /tmp/code-stock-backend.service << EOF
 [Unit]
-Description=OpenClaw Gateway
-After=network-online.target
-Wants=network-online.target
+Description=Code Stock Backend
+After=network.target docker.service
+Requires=docker.service
 
 [Service]
-ExecStart=/home/你的用户名/.nvm/versions/node/v22.22.1/bin/node /home/你的用户名/.nvm/versions/node/v22.22.1/lib/node_modules/openclaw/dist/index.js gateway --port 18789
+Type=simple
+WorkingDirectory=/home/$USER/code_stock/backend
+ExecStart=/home/$USER/.nvm/versions/node/v22.22.1/bin/node dist/app.js
 Restart=always
 RestartSec=5
-TimeoutStopSec=30
-TimeoutStartSec=30
-SuccessExitStatus=0 143
-KillMode=control-group
-Environment=HOME=/home/你的用户名
-Environment=TMPDIR=/tmp
-Environment=NODE_EXTRA_CA_CERTS=/etc/ssl/certs/ca-certificates.crt
-Environment=PATH=/home/你的用户名/.nvm/versions/node/v22.22.1/bin:/usr/local/bin:/usr/bin:/bin
+Environment=NODE_ENV=production
 
 [Install]
-WantedBy=default.target
+WantedBy=multi-user.target
 EOF
+
+sudo cp /tmp/code-stock-backend.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable code-stock-backend
+sudo systemctl start code-stock-backend
 ```
 
-> **注意**：将 `你的用户名` 和 Node 版本号替换为实际值
->
-> 如果云服务器在中国大陆，需要加代理环境变量：
-> ```
-> Environment=HTTP_PROXY=http://你的代理地址:端口
-> Environment=HTTPS_PROXY=http://你的代理地址:端口
-> ```
-
-### 5.2 启用 linger（让用户服务在退出登录后继续运行）
+### 8.2 Nginx 反向代理
 
 ```bash
-sudo loginctl enable-linger $(whoami)
+sudo apt install -y nginx
 ```
 
-### 5.3 启动服务
-
 ```bash
-systemctl --user daemon-reload
-systemctl --user enable openclaw-gateway.service
-systemctl --user start openclaw-gateway.service
-```
-
-### 5.4 检查状态
-
-```bash
-systemctl --user status openclaw-gateway.service
-# 应显示 Active: active (running)
-
-ss -tlnp | grep 18789
-# 应显示 LISTEN
-```
-
----
-
-## 六、配置 Nginx 反向代理（可选，推荐）
-
-如果需要通过域名或 HTTPS 访问 Dashboard：
-
-```bash
-sudo apt install -y nginx certbot python3-certbot-nginx
-```
-
-### 6.1 创建 Nginx 配置
-
-```bash
-sudo cat > /etc/nginx/sites-available/openclaw << 'EOF'
+sudo cat > /etc/nginx/sites-available/code-stock << 'EOF'
 server {
     listen 80;
-    server_name your-domain.com;  # 替换为你的域名或 IP
+    server_name your-domain.com;
 
+    # 前端静态文件
     location / {
-        proxy_pass http://127.0.0.1:18789;
+        root /home/你的用户名/code_stock/frontend/dist;
+        index index.html;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端 API
+    location /api {
+        proxy_pass http://127.0.0.1:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
-        proxy_read_timeout 86400;
     }
 }
 EOF
 
-sudo ln -sf /etc/nginx/sites-available/openclaw /etc/nginx/sites-enabled/
+sudo ln -sf /etc/nginx/sites-available/code-stock /etc/nginx/sites-enabled/
+sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### 6.2 配置 HTTPS（有域名时）
+### 8.3 HTTPS（有域名时）
 
 ```bash
+sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d your-domain.com
 ```
 
-### 6.3 配置防火墙
+---
+
+## 九、一键启动 / 停止
 
 ```bash
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw allow OpenSSH
-sudo ufw enable
+# 启动所有服务
+cd ~/code_stock
+docker compose up -d                    # 基础设施
+cd backend && npm run build && npm start # 后端（生产模式）
+cd frontend && npm run build             # 前端构建
+
+# 停止所有服务
+docker compose down                      # 基础设施
+sudo systemctl stop code-stock-backend   # 后端
 ```
 
 ---
 
-## 七、验证部署
-
-### 7.1 本地验证
+## 十、常用运维命令
 
 ```bash
-curl http://127.0.0.1:18789
-# 应返回 HTML 内容
-```
+# 查看后端状态
+sudo systemctl status code-stock-backend
 
-### 7.2 浏览器访问
+# 查看后端日志
+sudo journalctl -u code-stock-backend -f
 
-```
-http://你的服务器IP/#token=你的gateway-token
-```
+# 重启后端
+sudo systemctl restart code-stock-backend
 
-或配置了域名后：
+# 查看 Docker 容器状态
+docker compose ps
 
-```
-https://your-domain.com/#token=你的gateway-token
-```
+# 查看 Docker 日志
+docker compose logs -f mongodb
+docker compose logs -f postgres
+docker compose logs -f redis
 
-### 7.3 检查 MCP 服务
-
-在 Dashboard 对话中发送消息，确认：
-- DeepSeek 模型正常回复
-- fenxi-service 的工具可用
-
----
-
-## 八、常用运维命令
-
-```bash
-# 查看服务状态
-systemctl --user status openclaw-gateway.service
-
-# 查看日志
-journalctl --user -u openclaw-gateway.service -f
-
-# 重启服务
-systemctl --user restart openclaw-gateway.service
-
-# 停止服务
-systemctl --user stop openclaw-gateway.service
-
-# 更新 OpenClaw
-npm update -g openclaw
-systemctl --user restart openclaw-gateway.service
-
-# 更新 fenxi-service 代码
-cd /path/to/my-mcp-server
+# 更新代码并重启
+cd ~/code_stock
 git pull
-npm install
-systemctl --user restart openclaw-gateway.service
-
-# 查看 MCP 服务列表
-openclaw mcp list
-
-# 健康检查
-openclaw doctor
+cd backend && npm install && npm run build
+sudo systemctl restart code-stock-backend
+cd ../frontend && npm install && npm run build
 ```
 
 ---
 
-## 九、配置文件清单
+## 十一、配置文件清单
 
 | 文件 | 路径 | 说明 |
 |------|------|------|
-| 主配置 | `~/.openclaw/openclaw.json` | Gateway、模型、MCP 等配置 |
-| API Key | `~/.openclaw/agents/main/agent/auth-profiles.json` | DeepSeek API Key |
-| systemd 服务 | `~/.config/systemd/user/openclaw-gateway.service` | 系统服务配置 |
+| 环境变量 | `backend/.env` | 数据库、JWT、Redis 等配置 |
+| Docker Compose | `docker-compose.yml` | 基础设施服务编排 |
+| systemd 服务 | `/etc/systemd/system/code-stock-backend.service` | 后端系统服务 |
+| Nginx 配置 | `/etc/nginx/sites-available/code-stock` | 反向代理配置 |
 
 ---
 
-## 十、故障排查
+## 十二、故障排查
 
-### Gateway 启动失败
+### 后端启动失败
 
 ```bash
 # 查看日志
-journalctl --user -u openclaw-gateway.service -n 30
+sudo journalctl -u code-stock-backend -n 30
 
 # 常见原因：
-# 1. gateway.mode 未设置 → 在 openclaw.json 中添加 "gateway.mode": "local"
-# 2. Node 版本过低 → 需要 Node 22+
-# 3. 端口被占用 → ss -tlnp | grep 18789
+# 1. 数据库未就绪 → docker compose ps 确认容器健康
+# 2. .env 配置错误 → 检查数据库连接字符串
+# 3. 端口被占用 → ss -tlnp | grep 3000
 ```
 
-### 模型调用失败（网络错误）
+### 数据库连接失败
 
 ```bash
-# DeepSeek
-curl -s https://api.deepseek.com/v1/models
+# 测试 MongoDB 连接
+docker exec quant_mongo mongosh -u admin -p admin123
 
-# Gemini
-curl -s "https://generativelanguage.googleapis.com/v1beta/models?key=你的API Key"
+# 测试 PostgreSQL 连接
+docker exec quant_postgres psql -U admin -d quant_trading
 
-# 如果需要代理，在 systemd 服务中添加：
-# Environment=HTTP_PROXY=http://代理地址:端口
-# Environment=HTTPS_PROXY=http://代理地址:端口
+# 测试 Redis 连接
+docker exec quant_redis redis-cli ping
 ```
 
-### Gemini 配额不足（429 错误）
-
-```
-API rate limit reached. Please try again later.
-```
-
-- 免费层有请求频率限制，等待几分钟后重试
-- 考虑切换到 `gemini-2.5-flash`（免费额度更大）
-- 或升级为付费计划：https://ai.google.dev/pricing
-
-### MCP 服务未加载
+### Docker 服务异常
 
 ```bash
-# 确认路径正确
-node /path/to/my-mcp-server/server.js
+# 重启所有容器
+docker compose restart
 
-# 确认已注册
-openclaw mcp list
+# 查看某个容器日志
+docker compose logs mongodb --tail 50
+
+# 重建容器
+docker compose down && docker compose up -d
 ```
