@@ -43,7 +43,14 @@ node -v   # v22.x.x
 npm -v    # 10.x.x
 ```
 
-### 2.2 Python 3
+### 2.2 PM2
+
+```bash
+npm install -g pm2
+pm2 -v
+```
+
+### 2.3 Python 3
 
 ```bash
 sudo apt install -y python3 python3-pip python3-venv
@@ -158,12 +165,12 @@ LOG_LEVEL=warn
 ### 5.3 构建并启动
 
 ```bash
-# 开发模式
-npm run dev
-
-# 生产模式
+# 构建
 npm run build
-npm start
+
+# 使用 PM2 启动（在项目根目录执行）
+cd ~/code_stock
+pm2 start ecosystem.config.js --only code-stock-backend
 ```
 
 验证：
@@ -187,16 +194,18 @@ npm install
 
 如需修改后端 API 地址，编辑 frontend 中的环境配置文件，将 API 地址指向 backend 服务。
 
-### 6.3 启动
+### 6.3 构建并启动
 
 ```bash
-# 开发模式
-npm run dev
-
-# 生产构建
+# 构建
 npm run build
-# 构建产物在 dist/ 目录，可用 Nginx 托管
+
+# 使用 PM2 启动（在项目根目录执行）
+cd ~/code_stock
+pm2 start ecosystem.config.js --only code-stock-frontend
 ```
+
+前端默认在 `4173` 端口提供预览服务。如需使用 Nginx 托管静态文件，可跳过 PM2 启动 frontend，直接用 Nginx 指向 `frontend/dist` 目录。
 
 ---
 
@@ -225,11 +234,38 @@ sudo apt install -y libta-lib0-dev
 
 ---
 
-## 八、生产部署（推荐）
+## 八、生产部署
 
-### 8.1 使用 systemd 管理 backend
+提供两种进程管理方式，任选其一。
+
+### 方式一：PM2（推荐）
+
+项目根目录已有 `ecosystem.config.js`（PM2 配置文件），构建完成后可直接用 PM2 启动所有服务：
 
 ```bash
+cd ~/code_stock
+
+# 构建前后端
+cd backend && npm install && npm run build
+cd ../frontend && npm install && npm run build
+
+# 用 PM2 一键启动
+cd ~/code_stock
+pm2 start ecosystem.config.js
+
+# 查看状态
+pm2 status
+
+# 设置开机自启
+pm2 save
+pm2 startup
+# 按提示执行输出的命令（需要 sudo）
+```
+
+### 方式二：systemd
+
+```bash
+# 创建 backend 服务
 cat > /tmp/code-stock-backend.service << EOF
 [Unit]
 Description=Code Stock Backend
@@ -252,9 +288,12 @@ sudo cp /tmp/code-stock-backend.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable code-stock-backend
 sudo systemctl start code-stock-backend
+
+# 查看状态
+sudo systemctl status code-stock-backend
 ```
 
-### 8.2 Nginx 反向代理
+### Nginx 反向代理
 
 ```bash
 sudo apt install -y nginx
@@ -290,7 +329,7 @@ sudo rm -f /etc/nginx/sites-enabled/default
 sudo nginx -t && sudo systemctl reload nginx
 ```
 
-### 8.3 HTTPS（有域名时）
+### HTTPS（有域名时）
 
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
@@ -301,46 +340,72 @@ sudo certbot --nginx -d your-domain.com
 
 ## 九、一键启动 / 停止
 
-```bash
-# 启动所有服务
-cd ~/code_stock
-docker compose up -d                    # 基础设施
-cd backend && npm run build && npm start # 后端（生产模式）
-cd frontend && npm run build             # 前端构建
+### PM2 方式
 
-# 停止所有服务
-docker compose down                      # 基础设施
-sudo systemctl stop code-stock-backend   # 后端
+```bash
+# 启动基础设施 + 前后端
+cd ~/code_stock && docker compose up -d
+pm2 start ecosystem.config.js
+
+# 停止所有
+pm2 stop all && docker compose down
+```
+
+### systemd 方式
+
+```bash
+# 启动基础设施 + 后端
+cd ~/code_stock && docker compose up -d
+sudo systemctl start code-stock-backend
+
+# 停止所有
+sudo systemctl stop code-stock-backend && docker compose down
 ```
 
 ---
 
 ## 十、常用运维命令
 
+### PM2 方式
+
 ```bash
-# 查看后端状态
-sudo systemctl status code-stock-backend
-
-# 查看后端日志
-sudo journalctl -u code-stock-backend -f
-
-# 重启后端
-sudo systemctl restart code-stock-backend
-
-# 查看 Docker 容器状态
-docker compose ps
-
-# 查看 Docker 日志
-docker compose logs -f mongodb
-docker compose logs -f postgres
-docker compose logs -f redis
+pm2 status                              # 查看所有进程状态
+pm2 logs                                # 查看实时日志
+pm2 logs code-stock-backend             # 只看后端日志
+pm2 logs code-stock-frontend            # 只看前端日志
+pm2 restart all                         # 重启所有
+pm2 restart code-stock-backend          # 只重启后端
+pm2 monit                               # 监控面板
 
 # 更新代码并重启
-cd ~/code_stock
-git pull
+cd ~/code_stock && git pull
 cd backend && npm install && npm run build
-sudo systemctl restart code-stock-backend
 cd ../frontend && npm install && npm run build
+cd ~/code_stock && pm2 restart all
+```
+
+### systemd 方式
+
+```bash
+sudo systemctl status code-stock-backend    # 查看状态
+sudo journalctl -u code-stock-backend -f    # 查看日志
+sudo systemctl restart code-stock-backend   # 重启后端
+sudo systemctl stop code-stock-backend      # 停止后端
+
+# 更新代码并重启
+cd ~/code_stock && git pull
+cd backend && npm install && npm run build
+cd ../frontend && npm install && npm run build
+sudo systemctl restart code-stock-backend
+```
+
+### Docker 相关
+
+```bash
+docker compose ps                       # 查看容器状态
+docker compose logs -f mongodb          # MongoDB 日志
+docker compose logs -f postgres         # PostgreSQL 日志
+docker compose logs -f redis            # Redis 日志
 ```
 
 ---
@@ -351,7 +416,8 @@ cd ../frontend && npm install && npm run build
 |------|------|------|
 | 环境变量 | `backend/.env` | 数据库、JWT、Redis 等配置 |
 | Docker Compose | `docker-compose.yml` | 基础设施服务编排 |
-| systemd 服务 | `/etc/systemd/system/code-stock-backend.service` | 后端系统服务 |
+| PM2 配置 | `ecosystem.config.js` | 前后端进程管理（方式一） |
+| systemd 服务 | `/etc/systemd/system/code-stock-backend.service` | 后端系统服务（方式二） |
 | Nginx 配置 | `/etc/nginx/sites-available/code-stock` | 反向代理配置 |
 
 ---
@@ -361,13 +427,17 @@ cd ../frontend && npm install && npm run build
 ### 后端启动失败
 
 ```bash
-# 查看日志
-sudo journalctl -u code-stock-backend -n 30
+# PM2 方式查看日志
+pm2 logs code-stock-backend --lines 50
+
+# systemd 方式查看日志
+sudo journalctl -u code-stock-backend -n 50
 
 # 常见原因：
 # 1. 数据库未就绪 → docker compose ps 确认容器健康
 # 2. .env 配置错误 → 检查数据库连接字符串
 # 3. 端口被占用 → ss -tlnp | grep 3000
+# 4. 未构建 → cd backend && npm run build
 ```
 
 ### 数据库连接失败
