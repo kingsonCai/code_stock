@@ -89,7 +89,7 @@ export async function adminMiddleware(ctx: Context, next: Next) {
  */
 export function generateToken(payload: { userId: string; email: string }): string {
   return jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.expiresIn,
+    expiresIn: config.jwt.expiresIn as unknown as number,
   });
 }
 
@@ -98,7 +98,7 @@ export function generateToken(payload: { userId: string; email: string }): strin
  */
 export function generateRefreshToken(payload: { userId: string; email: string }): string {
   return jwt.sign(payload, config.jwt.secret, {
-    expiresIn: config.jwt.refreshExpiresIn,
+    expiresIn: config.jwt.refreshExpiresIn as unknown as number,
   });
 }
 

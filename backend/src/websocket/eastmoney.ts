@@ -99,7 +99,7 @@ export class EastMoneyMarket {
         throw new Error(`HTTP ${response.status}`);
       }
 
-      const data = await response.json() as EastMoneyResponse[];
+      const data = await response.json() as EastMoneyResponse;
 
       if (data && data.data) {
         this.processQuote(data.data);

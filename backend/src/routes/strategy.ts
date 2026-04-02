@@ -55,7 +55,12 @@ router.post(
     const data = ctx.request.body as z.infer<typeof createStrategySchema>;
 
     const strategy = await strategyService.create(userId, {
-      ...data,
+      userId,
+      name: data.name,
+      code: data.code,
+      description: data.description,
+      status: data.status ?? 'draft',
+      isPublic: data.isPublic ?? false,
       config: data.config as StrategyConfig,
     });
 

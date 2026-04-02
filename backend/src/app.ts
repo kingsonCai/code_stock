@@ -188,8 +188,8 @@ async function start() {
   }
 }
 
-// 如果直接运行此文件
-if (import.meta.url === `file://${process.argv[1]}`) {
+// 如果直接运行此文件（通过 node dist/app.js）
+if (process.argv[1]?.endsWith('dist/app.js')) {
   start();
 }
 

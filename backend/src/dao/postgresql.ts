@@ -158,7 +158,7 @@ export class PostgresRepository<T extends BaseEntity> implements IRepository<T> 
     }
 
     const result = await this.pool.query(sql, values);
-    return result.rows.map(row => this.rowToEntity(row));
+    return result.rows.map((row: Record<string, unknown>) => this.rowToEntity(row));
   }
 
   async create(entity: Omit<T, 'id' | 'createdAt' | 'updatedAt'>): Promise<T> {
