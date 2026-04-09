@@ -31,6 +31,8 @@ class MongoConnection {
             maxPoolSize: 10,
             minPoolSize: 2,
             maxIdleTimeMS: 30000,
+            serverSelectionTimeoutMS: 5000,
+            connectTimeoutMS: 5000,
         };
         this.client = new mongodb_1.MongoClient(this.uri, options);
         await this.client.connect();

@@ -6,22 +6,22 @@ import { koaBody } from 'koa-body';
 import cors from '@koa/cors';
 import Router from 'koa-router';
 import { Server as HttpServer } from 'http';
-import { config } from './config/index.js';
-import { errorHandler, notFoundHandler } from './middleware/error.js';
-import { initDatabase, closeDatabase } from './dao/connection.js';
-import { logger } from './config/logger.js';
-import { WebSocketServer } from './websocket/index.js';
-import { MarketSimulator } from './websocket/market.js';
-import { TencentFinanceMarket } from './websocket/tencent.js';
-import { OkxMarket } from './websocket/okx.js';
-import { GateMarket } from './websocket/gate.js';
-import { SpreadMonitor } from './websocket/spread-monitor.js';
-import { setWsServer, setMarketSimulator, setTencentMarket, setOkxMarket, setGateMarket, setSpreadMonitor, wsServer, marketSimulator, tencentMarket, okxMarket, gateMarket, spreadMonitor } from './websocket/server.js';
+import { config } from './config/index';
+import { errorHandler, notFoundHandler } from './middleware/error';
+import { initDatabase, closeDatabase } from './dao/connection';
+import { logger } from './config/logger';
+import { WebSocketServer } from './websocket/index';
+import { MarketSimulator } from './websocket/market';
+import { TencentFinanceMarket } from './websocket/tencent';
+import { OkxMarket } from './websocket/okx';
+import { GateMarket } from './websocket/gate';
+import { SpreadMonitor } from './websocket/spread-monitor';
+import { setWsServer, setMarketSimulator, setTencentMarket, setOkxMarket, setGateMarket, setSpreadMonitor, wsServer, marketSimulator, tencentMarket, okxMarket, gateMarket, spreadMonitor } from './websocket/server';
 
 // 路由
-import authRoutes from './routes/auth.js';
-import strategyRoutes from './routes/strategy.js';
-import portfolioRoutes from './routes/portfolio.js';
+import authRoutes from './routes/auth';
+import strategyRoutes from './routes/strategy';
+import portfolioRoutes from './routes/portfolio';
 
 export function createApp(): Koa {
   const app = new Koa();
@@ -78,7 +78,9 @@ export function createApp(): Koa {
 async function start() {
   try {
     // 初始化数据库连接
+    console.log('Starting database initialization...');
     await initDatabase();
+    console.log('Database initialized successfully');
 
     const app = createApp();
 
@@ -188,8 +190,8 @@ async function start() {
   }
 }
 
-// 如果直接运行此文件（通过 node dist/app.js）
-if (process.argv[1]?.endsWith('dist/app.js')) {
+// 如果直接运行此文件（通过 node dist/app.js 或 tsx src/app.ts）
+if (process.argv[1]?.endsWith('dist/app.js') || process.argv[1]?.includes('app.ts')) {
   start();
 }
 

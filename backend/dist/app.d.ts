@@ -3,7 +3,7 @@
  */
 import Koa from 'koa';
 import { Server as HttpServer } from 'http';
-import { WebSocketServer } from './websocket/index.js';
+import { WebSocketServer } from './websocket/index';
 export declare function createApp(): Koa;
 declare function start(): Promise<{
     server: HttpServer<typeof import("http").IncomingMessage, typeof import("http").ServerResponse>;

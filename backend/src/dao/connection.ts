@@ -29,6 +29,8 @@ export class MongoConnection implements IDatabaseConnection {
       maxPoolSize: 10,
       minPoolSize: 2,
       maxIdleTimeMS: 30000,
+      serverSelectionTimeoutMS: 5000,
+      connectTimeoutMS: 5000,
     };
 
     this.client = new MongoClient(this.uri, options);
