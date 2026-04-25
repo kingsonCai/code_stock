@@ -14,7 +14,7 @@ const customFormat = printf(({ level, message, timestamp, ...metadata }) => {
 
 // 创建 logger 实例
 export const logger = winston.createLogger({
-  level: config.logLevel,
+  level: 'info', // 全局日志级别，确保 info 及以上级别日志被记录
   format: combine(
     timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
     json()
@@ -25,24 +25,24 @@ export const logger = winston.createLogger({
       filename: 'logs/error.log',
       level: 'error',
     }),
-    // 所有日志
+    // 所有日志，级别由环境变量控制
     new winston.transports.File({
       filename: 'logs/combined.log',
+      level: config.logLevel,
     }),
   ],
 });
 
-// 开发环境添加控制台输出
-if (config.nodeEnv !== 'production') {
-  logger.add(
-    new winston.transports.Console({
-      format: combine(
-        colorize(),
-        timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
-        customFormat
-      ),
-    })
-  );
-}
+// 始终添加控制台输出（开发和生产环境）
+logger.add(
+  new winston.transports.Console({
+    level: 'info', // 控制台输出 info 及以上级别的日志
+    format: combine(
+      colorize(),
+      timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+      customFormat
+    ),
+  })
+);
 
 export default logger;

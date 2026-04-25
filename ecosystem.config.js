@@ -8,6 +8,7 @@ module.exports = {
       autorestart: true,
       watch: false,
       max_memory_restart: '1G',
+      node_args: '--input-type=commonjs',
       env: {
         NODE_ENV: 'production',
       },

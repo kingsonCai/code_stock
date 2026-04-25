@@ -78,9 +78,9 @@ export function createApp(): Koa {
 async function start() {
   try {
     // 初始化数据库连接
-    console.log('Starting database initialization...');
+    logger.info('Starting database initialization...');
     await initDatabase();
-    console.log('Database initialized successfully');
+    logger.info('Database initialized successfully');
 
     const app = createApp();
 

@@ -69,9 +69,9 @@ function createApp() {
 async function start() {
     try {
         // 初始化数据库连接
-        console.log('Starting database initialization...');
+        logger_1.logger.info('Starting database initialization...');
         await (0, connection_1.initDatabase)();
-        console.log('Database initialized successfully');
+        logger_1.logger.info('Database initialized successfully');
         const app = createApp();
         // 创建 HTTP 服务器
         const server = app.listen(index_1.config.port, () => {
