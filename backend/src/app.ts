@@ -191,7 +191,7 @@ async function start() {
 }
 
 // 如果直接运行此文件（通过 node dist/app.js 或 tsx src/app.ts）
-if (process.argv[1]?.endsWith('dist/app.js') || process.argv[1]?.includes('app.ts')) {
+if (require.main === module) {
   start();
 }
 
