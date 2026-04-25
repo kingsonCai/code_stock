@@ -5,6 +5,9 @@ import Koa from 'koa';
 import { koaBody } from 'koa-body';
 import cors from '@koa/cors';
 import Router from 'koa-router';
+import serve from 'koa-static';
+import send from 'koa-send';
+import path from 'path';
 import { Server as HttpServer } from 'http';
 import { config } from './config/index';
 import { errorHandler, notFoundHandler } from './middleware/error';
@@ -58,6 +61,15 @@ export function createApp(): Koa {
     logger.info(`${ctx.method} ${ctx.url} - ${ctx.status} - ${duration}ms`);
   });
 
+  // 静态文件服务（生产环境）
+  if (config.nodeEnv === 'production') {
+    const staticPath = path.resolve(__dirname, '../../frontend/dist');
+    app.use(serve(staticPath, {
+      maxAge: 365 * 24 * 60 * 60 * 1000,
+      index: false, // 不自动提供 index.html，由 SPA fallback 处理
+    }));
+  }
+
   // API 路由
   const apiRouter = new Router({ prefix: '/api' });
 
@@ -67,8 +79,22 @@ export function createApp(): Koa {
   app.use(strategyRoutes.routes());
   app.use(portfolioRoutes.routes());
 
-  // 404 处理
-  app.use(notFoundHandler);
+  // SPA fallback（生产环境）
+  if (config.nodeEnv === 'production') {
+    app.use(async (ctx) => {
+      // API 404 返回 JSON
+      if (ctx.path.startsWith('/api')) {
+        ctx.status = 404;
+        ctx.body = { error: 'Not found' };
+        return;
+      }
+      // 非 API 路由返回 index.html（支持 Vue Router 的 history 模式）
+      const staticPath = path.resolve(__dirname, '../../frontend/dist');
+      await send(ctx, 'index.html', { root: staticPath });
+    });
+  } else {
+    app.use(notFoundHandler);
+  }
 
   return app;
 }

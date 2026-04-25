@@ -12,6 +12,9 @@ const koa_1 = __importDefault(require("koa"));
 const koa_body_1 = require("koa-body");
 const cors_1 = __importDefault(require("@koa/cors"));
 const koa_router_1 = __importDefault(require("koa-router"));
+const koa_static_1 = __importDefault(require("koa-static"));
+const koa_send_1 = __importDefault(require("koa-send"));
+const path_1 = __importDefault(require("path"));
 const index_1 = require("./config/index");
 const error_1 = require("./middleware/error");
 const connection_1 = require("./dao/connection");
@@ -53,6 +56,14 @@ function createApp() {
         const duration = Date.now() - start;
         logger_1.logger.info(`${ctx.method} ${ctx.url} - ${ctx.status} - ${duration}ms`);
     });
+    // 静态文件服务（生产环境）
+    if (index_1.config.nodeEnv === 'production') {
+        const staticPath = path_1.default.resolve(__dirname, '../../frontend/dist');
+        app.use((0, koa_static_1.default)(staticPath, {
+            maxAge: 365 * 24 * 60 * 60 * 1000,
+            index: false, // 不自动提供 index.html，由 SPA fallback 处理
+        }));
+    }
     // API 路由
     const apiRouter = new koa_router_1.default({ prefix: '/api' });
     // 匂载子路由
@@ -60,8 +71,23 @@ function createApp() {
     app.use(auth_1.default.routes());
     app.use(strategy_1.default.routes());
     app.use(portfolio_1.default.routes());
-    // 404 处理
-    app.use(error_1.notFoundHandler);
+    // SPA fallback（生产环境）
+    if (index_1.config.nodeEnv === 'production') {
+        app.use(async (ctx) => {
+            // API 404 返回 JSON
+            if (ctx.path.startsWith('/api')) {
+                ctx.status = 404;
+                ctx.body = { error: 'Not found' };
+                return;
+            }
+            // 非 API 路由返回 index.html（支持 Vue Router 的 history 模式）
+            const staticPath = path_1.default.resolve(__dirname, '../../frontend/dist');
+            await (0, koa_send_1.default)(ctx, 'index.html', { root: staticPath });
+        });
+    }
+    else {
+        app.use(error_1.notFoundHandler);
+    }
     return app;
 }
 // 启动服务器

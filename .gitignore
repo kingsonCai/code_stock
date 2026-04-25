@@ -4,7 +4,6 @@ __pycache__/
 *.pyc
 
 # Build output
-dist/
 build/
 *.tsbuildinfo
 *.map
