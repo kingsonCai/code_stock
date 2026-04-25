@@ -7,11 +7,11 @@ export interface SpreadData {
     symbol: string;
     okxSymbol: string;
     gateSymbol: string;
-    okxPrice: number;
-    gatePrice: number;
-    spread: number;
-    spreadPercent: number;
-    premium: 'OKX' | 'Gate' | 'None';
+    okxPrice: number | null;
+    gatePrice: number | null;
+    spread: number | null;
+    spreadPercent: number | null;
+    premium: 'OKX' | 'Gate' | 'None' | null;
     timestamp: number;
 }
 interface SpreadMonitorConfig {

@@ -2,7 +2,7 @@
 import { ref, onMounted, watch, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useStrategyStore } from '../stores/strategy';
-import { Strategy, StrategyStatus } from '../api/strategy';
+import { StrategyStatus } from '../api/strategy';
 import CodeEditor from '../components/editor/CodeEditor.vue';
 
 const route = useRoute();

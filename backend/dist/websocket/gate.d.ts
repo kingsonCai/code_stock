@@ -25,21 +25,13 @@ export declare class GateMarket {
      */
     stop(): void;
     /**
-     * 获取所有交易对行情
+     * 获取所有交易对行情（使用单个批量请求）
      */
     private fetchAllTickers;
     /**
      * 处理行情数据
      */
     private processTickers;
-    /**
-     * 网络错误时模拟微小价格变化
-     */
-    private simulateSmallChanges;
-    /**
-     * 初始化默认价格
-     */
-    private initializeDefaultPrices;
     /**
      * 获取当前价格
      */

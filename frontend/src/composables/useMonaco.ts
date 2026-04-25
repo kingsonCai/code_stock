@@ -1,7 +1,7 @@
 /**
  * Monaco Editor 封装
  */
-import { ref, onMounted, onUnmounted, Ref, watch } from 'vue';
+import { ref, onMounted, onUnmounted, Ref } from 'vue';
 import * as monaco from 'monaco-editor';
 
 export interface EditorConfig {

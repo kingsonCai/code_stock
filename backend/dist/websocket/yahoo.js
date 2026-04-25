@@ -37,8 +37,6 @@ class YahooFinanceMarket {
      */
     async start() {
         logger_js_1.logger.info('Yahoo Finance market data service starting...');
-        // 初始化默认价格
-        this.initializeDefaultPrices();
         // 首次获取真实价格
         await this.fetchAllQuotes();
         // 每 10 秒更新一次
@@ -100,10 +98,6 @@ class YahooFinanceMarket {
                 logger_js_1.logger.info(`Yahoo Finance initialized with ${successCount}/${SYMBOLS.length} symbols`);
             }
         }
-        else {
-            // 全部失败时使用模拟
-            this.simulateSmallChanges();
-        }
     }
     /**
      * 处理单个报价
@@ -130,50 +124,8 @@ class YahooFinanceMarket {
         logger_js_1.logger.debug(`${symbol}: $${newPrice.toFixed(2)} (${(quote.regularMarketChangePercent || 0).toFixed(2)}%)`);
     }
     /**
-     * 网络错误时模拟微小价格变化
-     */
-    simulateSmallChanges() {
-        const marketPrices = new Map();
-        this.prices.forEach((data, symbol) => {
-            // 微小随机波动 (-0.05% ~ +0.05%)
-            const change = data.price * 0.0005 * (Math.random() - 0.5) * 2;
-            const newPrice = Math.max(0.01, data.price + change);
-            this.prices.set(symbol, { ...data, price: newPrice });
-            marketPrices.set(symbol, newPrice);
-            const marketData = {
-                symbol,
-                price: newPrice,
-                change: change,
-                changePercent: (change / data.price) * 100,
-                volume: Math.floor(Math.random() * 1000000),
-                high: newPrice * 1.001,
-                low: newPrice * 0.999,
-                open: data.previousClose || newPrice,
-                timestamp: Date.now(),
-            };
-            this.wsServer.broadcast(`market:${symbol}`, marketData);
-        });
-        portfolio_js_1.portfolioService.updateFromMarketData(marketPrices);
-    }
-    /**
      * 初始化默认价格
      */
-    initializeDefaultPrices() {
-        const defaults = {
-            'AAPL': 215.0,
-            'GOOGL': 168.0,
-            'MSFT': 415.0,
-            'NVDA': 880.0,
-            'TSLA': 250.0,
-            'GC=F': 2350.0,
-            'SI=F': 28.0,
-            'CL=F': 78.0,
-        };
-        SYMBOLS.forEach(({ symbol }) => {
-            const price = defaults[symbol] || 100;
-            this.prices.set(symbol, { price, previousClose: price });
-        });
-    }
     /**
      * 获取当前价格
      */

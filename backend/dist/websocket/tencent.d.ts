@@ -27,14 +27,6 @@ export declare class TencentFinanceMarket {
      */
     private parseTencentResponse;
     /**
-     * 网络错误时模拟微小价格变化
-     */
-    private simulateSmallChanges;
-    /**
-     * 初始化默认价格
-     */
-    private initializeDefaultPrices;
-    /**
      * 获取当前价格
      */
     getPrice(symbol: string): number | undefined;

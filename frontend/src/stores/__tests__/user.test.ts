@@ -4,7 +4,6 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { setActivePinia, createPinia } from 'pinia';
 import { useUserStore } from '../user';
-import * as authApi from '../../api/auth';
 
 // Mock authApi
 vi.mock('../../api/auth', () => ({

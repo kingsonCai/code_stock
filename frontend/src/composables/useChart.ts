@@ -7,7 +7,6 @@ import {
   IChartApi,
   ISeriesApi,
   CandlestickData,
-  LineData,
   HistogramData,
   ColorType,
   CrosshairMode,
@@ -134,7 +133,7 @@ export function useChart(containerRef: Ref<HTMLElement | null>, config: ChartCon
 
     const volumeData: HistogramData<Time>[] = data.map((d) => ({
       time: d.time,
-      value: d.volume || 0,
+      value: (d as any).volume || 0,
       color: d.close >= d.open ? '#26a69a80' : '#ef535080',
     }));
 
@@ -148,12 +147,12 @@ export function useChart(containerRef: Ref<HTMLElement | null>, config: ChartCon
 
     volumeSeries.value.update({
       time: data.time,
-      value: data.volume || 0,
+      value: (data as any).volume || 0,
       color: data.close >= data.open ? '#26a69a80' : '#ef535080',
     });
   }
 
-  function addMA(period: number, color: string = '#2962FF') {
+  function addMA(_period: number, color: string = '#2962FF') {
     if (!chart.value) return null;
 
     const maSeries = chart.value.addLineSeries({

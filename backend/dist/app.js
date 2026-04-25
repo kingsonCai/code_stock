@@ -17,7 +17,6 @@ const error_1 = require("./middleware/error");
 const connection_1 = require("./dao/connection");
 const logger_1 = require("./config/logger");
 const index_2 = require("./websocket/index");
-const market_1 = require("./websocket/market");
 const tencent_1 = require("./websocket/tencent");
 const okx_1 = require("./websocket/okx");
 const gate_1 = require("./websocket/gate");
@@ -84,7 +83,6 @@ async function start() {
         logger_1.logger.info('WebSocket server initialized at /ws');
         // 初始化行情数据源
         if (index_1.config.nodeEnv === 'development') {
-            // 优先使用腾讯财经真实数据
             try {
                 const tm = new tencent_1.TencentFinanceMarket(wss);
                 (0, server_1.setTencentMarket)(tm);
@@ -92,10 +90,7 @@ async function start() {
                 logger_1.logger.info('Tencent Finance market data service started');
             }
             catch (e) {
-                logger_1.logger.warn('Tencent Finance unavailable, falling back to simulator');
-                const ms = new market_1.MarketSimulator(wss);
-                (0, server_1.setMarketSimulator)(ms);
-                ms.start();
+                logger_1.logger.warn('Tencent Finance unavailable');
             }
         }
         // 启动加密货币数据服务
@@ -131,9 +126,6 @@ async function start() {
         const gracefulShutdown = async () => {
             logger_1.logger.info('Shutting down gracefully...');
             // 关闭行情服务
-            if (server_1.marketSimulator) {
-                server_1.marketSimulator.stop();
-            }
             if (server_1.tencentMarket) {
                 server_1.tencentMarket.stop();
             }

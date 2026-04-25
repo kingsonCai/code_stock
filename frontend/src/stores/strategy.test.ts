@@ -173,7 +173,7 @@ describe('Strategy Store', () => {
       });
 
       const store = useStrategyStore();
-      const result = await store.duplicateStrategy('1');
+      await store.duplicateStrategy('1');
 
       expect(strategyApi.duplicate).toHaveBeenCalledWith('1');
       expect(store.strategies).toContainEqual(duplicated);

@@ -7,7 +7,6 @@ import {
   UpdateStrategyInput,
   StrategyQueryParams,
 } from '../api/strategy';
-import { PaginatedResponse } from '../api/client';
 
 export const useStrategyStore = defineStore('strategy', () => {
   // State

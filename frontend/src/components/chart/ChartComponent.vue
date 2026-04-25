@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, watch, computed } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { useChart } from '../../composables/useChart';
 import { KlineData } from '../../types/market';
 
@@ -28,8 +28,6 @@ const error = ref<string | null>(null);
 const {
   chart,
   candlestickSeries,
-  volumeSeries,
-  initChart,
   setData,
   updateData,
   addMA,
@@ -102,7 +100,7 @@ async function loadData() {
     const klineData = generateKlineData(props.symbol);
 
     // 设置 K 线数据
-    setData(klineData);
+    setData(klineData as any);
 
     // 添加 MA 指标
     if (props.showMA) {
