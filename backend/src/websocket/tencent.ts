@@ -63,9 +63,6 @@ export class TencentFinanceMarket {
   async start(): Promise<void> {
     logger.info('Tencent Finance market data service starting...');
 
-    // 初始化默认价格
-    this.initializeDefaultPrices();
-
     // 首次获取真实价格
     await this.fetchAllQuotes();
 
@@ -113,7 +110,6 @@ export class TencentFinanceMarket {
       }
     } catch (error: any) {
       logger.warn(`Tencent Finance fetch error: ${error.message}`);
-      this.simulateSmallChanges();
     }
   }
 
@@ -182,65 +178,6 @@ export class TencentFinanceMarket {
     if (marketPrices.size > 0) {
       portfolioService.updateFromMarketData(marketPrices);
     }
-  }
-
-  /**
-   * 网络错误时模拟微小价格变化
-   */
-  private simulateSmallChanges(): void {
-    if (this.prices.size === 0) return;
-
-    const marketPrices = new Map<string, number>();
-
-    this.prices.forEach((data, symbol) => {
-      const change = data.price * 0.0005 * (Math.random() - 0.5) * 2;
-      const newPrice = Math.max(0.01, data.price + change);
-
-      this.prices.set(symbol, { ...data, price: newPrice });
-      marketPrices.set(symbol, newPrice);
-
-      const marketData: MarketData = {
-        symbol,
-        price: newPrice,
-        change: change,
-        changePercent: (change / data.price) * 100,
-        volume: Math.floor(Math.random() * 1000000),
-        high: newPrice * 1.001,
-        low: newPrice * 0.999,
-        open: data.previousClose || newPrice,
-        timestamp: Date.now(),
-      };
-
-      this.wsServer.broadcast(`market:${symbol}`, marketData);
-    });
-
-    portfolioService.updateFromMarketData(marketPrices);
-  }
-
-  /**
-   * 初始化默认价格
-   */
-  private initializeDefaultPrices(): void {
-    const defaults: Record<string, number> = {
-      '600519': 1445.0,
-      '000858': 165.0,
-      '601318': 42.0,
-      '000333': 58.0,
-      '600036': 32.0,
-      '601012': 6.5,
-      '000651': 42.0,
-      '002594': 85.0,
-      'AAPL': 215.0,
-      'GOOGL': 168.0,
-      'MSFT': 415.0,
-      'NVDA': 880.0,
-      'TSLA': 250.0,
-    };
-
-    ALL_STOCKS.forEach(({ symbol, name }) => {
-      const price = defaults[symbol] || 100;
-      this.prices.set(symbol, { price, previousClose: price, name });
-    });
   }
 
   /**

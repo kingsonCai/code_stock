@@ -77,12 +77,28 @@ function formatTime(date: string | Date): string {
   return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
 }
 
+// 安全格式化数字
+function safeToFixed(val: number | null | undefined, digits: number): string {
+  return val != null ? val.toFixed(digits) : '-'
+}
+
+function safeFormatPercent(val: number | null | undefined): string {
+  if (val == null) return '-'
+  return (val >= 0 ? '+' : '') + val.toFixed(2) + '%'
+}
+
+function safePrice(val: number | null | undefined): string {
+  if (val == null) return '-'
+  return '$' + val.toFixed(val >= 1 ? 2 : 4)
+}
+
 // 获取柱状图颜色
-function getBarColor(spreadPercent: number, premium: string): string {
+function getBarColor(spreadPercent: number | null | undefined, premium: string): string {
+  const val = spreadPercent ?? 0
   if (premium === 'OKX') {
-    return spreadPercent >= 0 ? '#26a69a' : '#ef5350'
+    return val >= 0 ? '#26a69a' : '#ef5350'
   } else {
-    return spreadPercent >= 0 ? '#ef5350' : '#26a69a'
+    return val >= 0 ? '#ef5350' : '#26a69a'
   }
 }
 
@@ -139,7 +155,7 @@ function updateChart() {
       formatter: (params: any) => {
         const data = topSpreads.find(s => s.symbol === params[0].name)
         if (!data) return ''
-        return `<strong>${params[0].name}</strong><br/>OKX: $${data.okxPrice.toFixed(4)}<br/>Gate: $${data.gatePrice.toFixed(4)}<br/>最大价差: ${data.spreadPercent >= 0 ? '+' : ''}${data.spreadPercent.toFixed(2)}%`
+        return `<strong>${params[0].name}</strong><br/>OKX: $${safeToFixed(data.okxPrice, 4)}<br/>Gate: $${safeToFixed(data.gatePrice, 4)}<br/>最大价差: ${safeFormatPercent(data.spreadPercent)}`
       }
     },
     grid: {
@@ -460,12 +476,14 @@ onUnmounted(() => {
                       <span
                         :class="[
                           'px-2 py-0.5 rounded text-xs font-medium',
-                          spread.spreadPercent >= 0
+                          spread.spreadPercent != null && spread.spreadPercent >= 0
                             ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'
-                            : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                            : spread.spreadPercent != null
+                              ? 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-400'
                         ]"
                       >
-                        {{ spread.spreadPercent >= 0 ? '+' : '' }}{{ spread.spreadPercent.toFixed(2) }}%
+                        {{ safeFormatPercent(spread.spreadPercent) }}
                       </span>
                     </div>
                   </td>
@@ -473,30 +491,30 @@ onUnmounted(() => {
                     <span
                       :class="[
                         'font-medium',
-                        spread.okxPrice > spread.gatePrice ? 'text-green-500' : 'text-red-500'
+                        spread.okxPrice != null && spread.gatePrice != null && spread.okxPrice > spread.gatePrice ? 'text-green-500' : 'text-red-500'
                       ]"
                     >
-                      ${{ spread.okxPrice.toFixed(spread.okxPrice >= 1 ? 2 : 4) }}
+                      {{ safePrice(spread.okxPrice) }}
                     </span>
                   </td>
                   <td class="py-3 px-4 text-right">
                     <span
                       :class="[
                         'font-medium',
-                        spread.gatePrice > spread.okxPrice ? 'text-green-500' : 'text-red-500'
+                        spread.gatePrice != null && spread.okxPrice != null && spread.gatePrice > spread.okxPrice ? 'text-green-500' : 'text-red-500'
                       ]"
                     >
-                      ${{ spread.gatePrice.toFixed(spread.gatePrice >= 1 ? 2 : 4) }}
+                      {{ safePrice(spread.gatePrice) }}
                     </span>
                   </td>
                   <td class="py-3 px-4 text-right">
                     <span
                       :class="[
                         'font-mono',
-                        spread.spread >= 0 ? 'text-green-500' : 'text-red-500'
+                        spread.spread != null && spread.spread >= 0 ? 'text-green-500' : 'text-red-500'
                       ]"
                     >
-                      {{ spread.spread >= 0 ? '+' : '' }}{{ spread.spread.toFixed(4) }}
+                      {{ spread.spread != null ? (spread.spread >= 0 ? '+' : '') + spread.spread.toFixed(4) : '-' }}
                     </span>
                   </td>
                   <td class="py-3 px-4 text-right">

@@ -11,12 +11,11 @@ import { errorHandler, notFoundHandler } from './middleware/error';
 import { initDatabase, closeDatabase } from './dao/connection';
 import { logger } from './config/logger';
 import { WebSocketServer } from './websocket/index';
-import { MarketSimulator } from './websocket/market';
 import { TencentFinanceMarket } from './websocket/tencent';
 import { OkxMarket } from './websocket/okx';
 import { GateMarket } from './websocket/gate';
 import { SpreadMonitor } from './websocket/spread-monitor';
-import { setWsServer, setMarketSimulator, setTencentMarket, setOkxMarket, setGateMarket, setSpreadMonitor, wsServer, marketSimulator, tencentMarket, okxMarket, gateMarket, spreadMonitor } from './websocket/server';
+import { setWsServer, setTencentMarket, setOkxMarket, setGateMarket, setSpreadMonitor, wsServer, tencentMarket, okxMarket, gateMarket, spreadMonitor } from './websocket/server';
 
 // 路由
 import authRoutes from './routes/auth';
@@ -97,17 +96,13 @@ async function start() {
 
     // 初始化行情数据源
     if (config.nodeEnv === 'development') {
-      // 优先使用腾讯财经真实数据
       try {
         const tm = new TencentFinanceMarket(wss);
         setTencentMarket(tm);
         await tm.start();
         logger.info('Tencent Finance market data service started');
       } catch (e) {
-        logger.warn('Tencent Finance unavailable, falling back to simulator');
-        const ms = new MarketSimulator(wss);
-        setMarketSimulator(ms);
-        ms.start();
+        logger.warn('Tencent Finance unavailable');
       }
     }
 
@@ -145,9 +140,6 @@ async function start() {
       logger.info('Shutting down gracefully...');
 
       // 关闭行情服务
-      if (marketSimulator) {
-        marketSimulator.stop();
-      }
       if (tencentMarket) {
         tencentMarket.stop();
       }

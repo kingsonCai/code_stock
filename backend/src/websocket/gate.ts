@@ -24,7 +24,7 @@ export const TRADING_PAIRS = [
   { symbol: 'AVAX_USDT', name: 'Avalanche', okxSymbol: 'AVAX-USDT' },
   { symbol: 'LINK_USDT', name: 'Chainlink', okxSymbol: 'LINK-USDT' },
   { symbol: 'DOT_USDT', name: 'Polkadot', okxSymbol: 'DOT-USDT' },
-  { symbol: 'MATIC_USDT', name: 'Polygon', okxSymbol: 'MATIC-USDT' },
+  { symbol: 'POL_USDT', name: 'Polygon', okxSymbol: 'POL-USDT' },
   { symbol: 'UNI_USDT', name: 'Uniswap', okxSymbol: 'UNI-USDT' },
   { symbol: 'ATOM_USDT', name: 'Cosmos', okxSymbol: 'ATOM-USDT' },
   { symbol: 'LTC_USDT', name: 'Litecoin', okxSymbol: 'LTC-USDT' },
@@ -73,9 +73,6 @@ export class GateMarket {
   async start(): Promise<void> {
     logger.info('Gate market data service starting...');
 
-    // 初始化默认价格
-    this.initializeDefaultPrices();
-
     // 首次获取真实价格
     await this.fetchAllTickers();
 
@@ -97,41 +94,36 @@ export class GateMarket {
   }
 
   /**
-   * 获取所有交易对行情
+   * 获取所有交易对行情（使用单个批量请求）
    */
   private async fetchAllTickers(): Promise<void> {
-    let url = '';
     try {
-      const allTickers: GateTicker[] = [];
+      const response = await fetch(`${this.baseUrl}/spot/tickers`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        agent: proxyAgent,
+      });
 
-      // Gate API 不支持批量查询，需要单独请求每个交易对
-      for (const pair of TRADING_PAIRS) {
-        url = `${this.baseUrl}/spot/tickers?currency_pair=${pair.symbol}`;
-
-        const response = await fetch(url, {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          agent: proxyAgent,
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP ${response.status}`);
-        }
-
-        const tickers: GateTicker[] = await response.json() as GateTicker[];
-        allTickers.push(...tickers);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
       }
 
-      this.processTickers(allTickers);
+      const allTickers: GateTicker[] = await response.json() as GateTicker[];
 
-      if (!this.initialized) {
+      // 本地过滤出我们关心的交易对
+      const ourSymbols = new Set(TRADING_PAIRS.map(p => p.symbol));
+      const ourTickers = allTickers.filter(t => ourSymbols.has(t.currency_pair));
+
+      this.processTickers(ourTickers);
+
+      if (!this.initialized && ourTickers.length > 0) {
         this.initialized = true;
-        logger.info(`Gate data initialized successfully with ${allTickers.length} pairs`);
+        logger.info(`Gate data initialized successfully with ${ourTickers.length} pairs`);
       }
     } catch (error: any) {
-      logger.warn(`Gate fetch error (${url}): ${error.message}`);
-      this.simulateSmallChanges();
+      // 出错时保留上次有效数据，不生成随机模拟数据
+      logger.warn(`Gate fetch error: ${error.message}`);
     }
   }
 
@@ -180,67 +172,6 @@ export class GateMarket {
 
       logger.debug(`Gate ${ticker.currency_pair} (${pairInfo.name}): $${price.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
     }
-  }
-
-  /**
-   * 网络错误时模拟微小价格变化
-   */
-  private simulateSmallChanges(): void {
-    if (this.prices.size === 0) return;
-
-    this.prices.forEach((data, symbol) => {
-      const change = data.price * 0.001 * (Math.random() - 0.5) * 2;
-      const newPrice = Math.max(0.01, data.price + change);
-
-      this.prices.set(symbol, { ...data, price: newPrice });
-
-      const marketData: MarketData = {
-        symbol,
-        price: newPrice,
-        change: change,
-        changePercent: (change / data.price) * 100,
-        volume: Math.floor(Math.random() * 1000000),
-        high: newPrice * 1.005,
-        low: newPrice * 0.995,
-        open: data.open24h || newPrice,
-        timestamp: Date.now(),
-      };
-
-      this.wsServer.broadcast(`market:crypto:${symbol}`, marketData);
-    });
-  }
-
-  /**
-   * 初始化默认价格
-   */
-  private initializeDefaultPrices(): void {
-    const defaults: Record<string, number> = {
-      'BTC_USDT': 67000.0,
-      'ETH_USDT': 3400.0,
-      'SOL_USDT': 145.0,
-      'XRP_USDT': 0.52,
-      'DOGE_USDT': 0.12,
-      'ADA_USDT': 0.45,
-      'AVAX_USDT': 35.0,
-      'LINK_USDT': 14.0,
-      'DOT_USDT': 7.0,
-      'MATIC_USDT': 0.7,
-      'UNI_USDT': 7.5,
-      'ATOM_USDT': 8.5,
-      'LTC_USDT': 85.0,
-      'BCH_USDT': 480.0,
-      'NEAR_USDT': 7.0,
-      'APT_USDT': 9.5,
-      'ARB_USDT': 1.1,
-      'OP_USDT': 2.5,
-      'FIL_USDT': 5.5,
-      'AAVE_USDT': 95.0,
-    };
-
-    TRADING_PAIRS.forEach(({ symbol, name }) => {
-      const price = defaults[symbol] || 100;
-      this.prices.set(symbol, { price, open24h: price, name });
-    });
   }
 
   /**

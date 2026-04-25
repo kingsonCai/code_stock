@@ -27,7 +27,7 @@ export const TRADING_PAIRS = [
   { symbol: 'AVAX-USDT', name: 'Avalanche', gateSymbol: 'AVAX_USDT' },
   { symbol: 'LINK-USDT', name: 'Chainlink', gateSymbol: 'LINK_USDT' },
   { symbol: 'DOT-USDT', name: 'Polkadot', gateSymbol: 'DOT_USDT' },
-  { symbol: 'MATIC-USDT', name: 'Polygon', gateSymbol: 'MATIC_USDT' },
+  { symbol: 'POL-USDT', name: 'Polygon', gateSymbol: 'POL_USDT' },
   { symbol: 'UNI-USDT', name: 'Uniswap', gateSymbol: 'UNI_USDT' },
   { symbol: 'ATOM-USDT', name: 'Cosmos', gateSymbol: 'ATOM_USDT' },
   { symbol: 'LTC-USDT', name: 'Litecoin', gateSymbol: 'LTC_USDT' },
@@ -74,9 +74,6 @@ export class OkxMarket {
    */
   async start(): Promise<void> {
     logger.info('OKX market data service starting...');
-
-    // 初始化默认价格
-    this.initializeDefaultPrices();
 
     // 首次获取真实价格
     await this.fetchAllTickers();
@@ -136,7 +133,6 @@ export class OkxMarket {
       }
     } catch (error: any) {
       logger.warn(`OKX fetch error: ${error.message}`);
-      this.simulateSmallChanges();
     }
   }
 
@@ -181,55 +177,6 @@ export class OkxMarket {
 
       logger.debug(`OKX ${ticker.instId} (${pairInfo.name}): $${price.toFixed(2)} (${changePercent >= 0 ? '+' : ''}${changePercent.toFixed(2)}%)`);
     }
-  }
-
-  /**
-   * 网络错误时模拟微小价格变化
-   */
-  private simulateSmallChanges(): void {
-    if (this.prices.size === 0) return;
-
-    this.prices.forEach((data, symbol) => {
-      const change = data.price * 0.001 * (Math.random() - 0.5) * 2;
-      const newPrice = Math.max(0.01, data.price + change);
-
-      this.prices.set(symbol, { ...data, price: newPrice });
-
-      const marketData: MarketData = {
-        symbol,
-        price: newPrice,
-        change: change,
-        changePercent: (change / data.price) * 100,
-        volume: Math.floor(Math.random() * 1000000),
-        high: newPrice * 1.005,
-        low: newPrice * 0.995,
-        open: data.open24h || newPrice,
-        timestamp: Date.now(),
-      };
-
-      this.wsServer.broadcast(`market:crypto:${symbol}`, marketData);
-    });
-  }
-
-  /**
-   * 初始化默认价格
-   */
-  private initializeDefaultPrices(): void {
-    const defaults: Record<string, number> = {
-      'BTC-USDT': 67000.0,
-      'ETH-USDT': 3400.0,
-      'SOL-USDT': 145.0,
-      'XRP-USDT': 0.52,
-      'DOGE-USDT': 0.12,
-      'ADA-USDT': 0.45,
-      'AVAX-USDT': 35.0,
-      'LINK-USDT': 14.0,
-    };
-
-    TRADING_PAIRS.forEach(({ symbol, name }) => {
-      const price = defaults[symbol] || 100;
-      this.prices.set(symbol, { price, open24h: price, name });
-    });
   }
 
   /**
