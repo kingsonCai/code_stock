@@ -169,7 +169,8 @@ function updateChart() {
       data: topSpreads.map(s => s.symbol),
       axisLabel: {
         color: '#666',
-        rotate: 30
+        rotate: 45,
+        interval: 0
       }
     },
     yAxis: {
