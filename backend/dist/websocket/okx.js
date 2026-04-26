@@ -35,6 +35,33 @@ exports.TRADING_PAIRS = [
     { symbol: 'OP-USDT', name: 'Optimism', gateSymbol: 'OP_USDT' },
     { symbol: 'FIL-USDT', name: 'Filecoin', gateSymbol: 'FIL_USDT' },
     { symbol: 'AAVE-USDT', name: 'Aave', gateSymbol: 'AAVE_USDT' },
+    // T1 优质候选
+    { symbol: 'PEPE-USDT', name: 'Pepe', gateSymbol: 'PEPE_USDT' },
+    { symbol: 'SHIB-USDT', name: 'Shiba Inu', gateSymbol: 'SHIB_USDT' },
+    { symbol: 'BONK-USDT', name: 'Bonk', gateSymbol: 'BONK_USDT' },
+    { symbol: 'FLOKI-USDT', name: 'Floki', gateSymbol: 'FLOKI_USDT' },
+    { symbol: 'BOME-USDT', name: 'Book of Meme', gateSymbol: 'BOME_USDT' },
+    { symbol: 'GALA-USDT', name: 'Gala', gateSymbol: 'GALA_USDT' },
+    { symbol: 'NOT-USDT', name: 'Notcoin', gateSymbol: 'NOT_USDT' },
+    { symbol: 'ENA-USDT', name: 'Ethena', gateSymbol: 'ENA_USDT' },
+    { symbol: 'CORE-USDT', name: 'Core', gateSymbol: 'CORE_USDT' },
+    { symbol: 'TRX-USDT', name: 'TRON', gateSymbol: 'TRX_USDT' },
+    // T2 次优候选
+    { symbol: 'DOG-USDT', name: 'Dog', gateSymbol: 'DOG_USDT' },
+    { symbol: 'HOT-USDT', name: 'Holo', gateSymbol: 'HOT_USDT' },
+    { symbol: 'HMSTR-USDT', name: 'Hamster Kombat', gateSymbol: 'HMSTR_USDT' },
+    { symbol: 'VANRY-USDT', name: 'Vanry', gateSymbol: 'VANRY_USDT' },
+    { symbol: 'FLR-USDT', name: 'Flare', gateSymbol: 'FLR_USDT' },
+    { symbol: 'RSR-USDT', name: 'Reserve Rights', gateSymbol: 'RSR_USDT' },
+    { symbol: 'MEW-USDT', name: 'cat in a dogs world', gateSymbol: 'MEW_USDT' },
+    { symbol: 'TURBO-USDT', name: 'Turbo', gateSymbol: 'TURBO_USDT' },
+    { symbol: 'GLMR-USDT', name: 'Moonbeam', gateSymbol: 'GLMR_USDT' },
+    { symbol: 'CKB-USDT', name: 'Nervos Network', gateSymbol: 'CKB_USDT' },
+    { symbol: 'ZKJ-USDT', name: 'zkSync', gateSymbol: 'ZKJ_USDT' },
+    { symbol: 'ALT-USDT', name: 'AltLayer', gateSymbol: 'ALT_USDT' },
+    { symbol: 'REZ-USDT', name: 'Renzo', gateSymbol: 'REZ_USDT' },
+    { symbol: 'BRETT-USDT', name: 'Brett', gateSymbol: 'BRETT_USDT' },
+    { symbol: 'KAS-USDT', name: 'Kaspa', gateSymbol: 'KAS_USDT' },
 ];
 class OkxMarket {
     wsServer;

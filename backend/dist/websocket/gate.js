@@ -32,6 +32,33 @@ exports.TRADING_PAIRS = [
     { symbol: 'OP_USDT', name: 'Optimism', okxSymbol: 'OP-USDT' },
     { symbol: 'FIL_USDT', name: 'Filecoin', okxSymbol: 'FIL-USDT' },
     { symbol: 'AAVE_USDT', name: 'Aave', okxSymbol: 'AAVE-USDT' },
+    // T1 优质候选
+    { symbol: 'PEPE_USDT', name: 'Pepe', okxSymbol: 'PEPE-USDT' },
+    { symbol: 'SHIB_USDT', name: 'Shiba Inu', okxSymbol: 'SHIB-USDT' },
+    { symbol: 'BONK_USDT', name: 'Bonk', okxSymbol: 'BONK-USDT' },
+    { symbol: 'FLOKI_USDT', name: 'Floki', okxSymbol: 'FLOKI-USDT' },
+    { symbol: 'BOME_USDT', name: 'Book of Meme', okxSymbol: 'BOME-USDT' },
+    { symbol: 'GALA_USDT', name: 'Gala', okxSymbol: 'GALA-USDT' },
+    { symbol: 'NOT_USDT', name: 'Notcoin', okxSymbol: 'NOT-USDT' },
+    { symbol: 'ENA_USDT', name: 'Ethena', okxSymbol: 'ENA-USDT' },
+    { symbol: 'CORE_USDT', name: 'Core', okxSymbol: 'CORE-USDT' },
+    { symbol: 'TRX_USDT', name: 'TRON', okxSymbol: 'TRX-USDT' },
+    // T2 次优候选
+    { symbol: 'DOG_USDT', name: 'Dog', okxSymbol: 'DOG-USDT' },
+    { symbol: 'HOT_USDT', name: 'Holo', okxSymbol: 'HOT-USDT' },
+    { symbol: 'HMSTR_USDT', name: 'Hamster Kombat', okxSymbol: 'HMSTR-USDT' },
+    { symbol: 'VANRY_USDT', name: 'Vanry', okxSymbol: 'VANRY-USDT' },
+    { symbol: 'FLR_USDT', name: 'Flare', okxSymbol: 'FLR-USDT' },
+    { symbol: 'RSR_USDT', name: 'Reserve Rights', okxSymbol: 'RSR-USDT' },
+    { symbol: 'MEW_USDT', name: 'cat in a dogs world', okxSymbol: 'MEW-USDT' },
+    { symbol: 'TURBO_USDT', name: 'Turbo', okxSymbol: 'TURBO-USDT' },
+    { symbol: 'GLMR_USDT', name: 'Moonbeam', okxSymbol: 'GLMR-USDT' },
+    { symbol: 'CKB_USDT', name: 'Nervos Network', okxSymbol: 'CKB-USDT' },
+    { symbol: 'ZKJ_USDT', name: 'zkSync', okxSymbol: 'ZKJ-USDT' },
+    { symbol: 'ALT_USDT', name: 'AltLayer', okxSymbol: 'ALT-USDT' },
+    { symbol: 'REZ_USDT', name: 'Renzo', okxSymbol: 'REZ-USDT' },
+    { symbol: 'BRETT_USDT', name: 'Brett', okxSymbol: 'BRETT-USDT' },
+    { symbol: 'KAS_USDT', name: 'Kaspa', okxSymbol: 'KAS-USDT' },
 ];
 class GateMarket {
     wsServer;
