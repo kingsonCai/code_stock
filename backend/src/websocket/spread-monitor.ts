@@ -17,7 +17,7 @@ export interface SpreadData {
   gatePrice: number | null; // Gate 价格，无数据时为 null
   spread: number | null;    // 绝对价差，数据不完整时为 null
   spreadPercent: number | null; // 价差百分比，数据不完整时为 null
-  premium: 'OKX' | 'Gate' | 'None' | null;  // 哪个交易所价格更高
+  premium: 'OKX' | 'Gate' | 'None' | '--' | null;  // 哪个交易所价格更高
   timestamp: number;
 }
 
@@ -97,6 +97,8 @@ export class SpreadMonitor {
         const avgPrice = (okxPrice! + gatePrice!) / 2;
         spreadPercent = avgPrice > 0 ? (spread / avgPrice) * 100 : 0;
         premium = spread > 0 ? 'OKX' : spread < 0 ? 'Gate' : 'None';
+      } else {
+        premium = '--';
       }
 
       const spreadData: SpreadData = {

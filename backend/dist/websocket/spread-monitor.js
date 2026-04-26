@@ -66,6 +66,9 @@ class SpreadMonitor {
                 spreadPercent = avgPrice > 0 ? (spread / avgPrice) * 100 : 0;
                 premium = spread > 0 ? 'OKX' : spread < 0 ? 'Gate' : 'None';
             }
+            else {
+                premium = '--';
+            }
             const spreadData = {
                 symbol: pair.symbol.replace('-USDT', ''),
                 okxSymbol: pair.symbol,

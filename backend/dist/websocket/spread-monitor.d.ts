@@ -11,7 +11,7 @@ export interface SpreadData {
     gatePrice: number | null;
     spread: number | null;
     spreadPercent: number | null;
-    premium: 'OKX' | 'Gate' | 'None' | null;
+    premium: 'OKX' | 'Gate' | 'None' | '--' | null;
     timestamp: number;
 }
 interface SpreadMonitorConfig {
